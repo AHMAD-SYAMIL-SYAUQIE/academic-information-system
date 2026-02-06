@@ -1,0 +1,24 @@
+diff --git a/node_modules/pdfkit/js/pdfkit.es5.js b/node_modules/pdfkit/js/pdfkit.es5.js
+index 2da8510..3785750 100644
+--- a/node_modules/pdfkit/js/pdfkit.es5.js
++++ b/node_modules/pdfkit/js/pdfkit.es5.js
+@@ -3914,18 +3914,13 @@ var PDFFontFactory = /*#__PURE__*/function () {
+ 
+ var FontsMixin = {
+   initFonts: function initFonts() {
+-    var defaultFont = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'Helvetica';
+     // Lookup table for embedded fonts
+     this._fontFamilies = {};
+     this._fontCount = 0; // Font state
+ 
+     this._fontSize = 12;
+     this._font = null;
+-    this._registeredFonts = {}; // Set the default font
+-
+-    if (defaultFont) {
+-      this.font(defaultFont);
+-    }
++    this._registeredFonts = {}; // Removed default font loading to prevent ENOENT errors
+   },
+   font: function font(src, family, size) {
+     var cacheKey, font;

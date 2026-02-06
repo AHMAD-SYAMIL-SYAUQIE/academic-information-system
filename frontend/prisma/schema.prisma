@@ -1,0 +1,501 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// ENUM TYPES
+// ========================================
+
+enum Role {
+  ADMIN
+  GURU
+  SISWA
+}
+
+enum Gender {
+  LAKI_LAKI
+  PEREMPUAN
+}
+
+enum StatusAbsensi {
+  HADIR
+  SAKIT
+  IZIN
+  ALPHA
+}
+
+enum StatusIzin {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum JenisNilai {
+  TUGAS
+  UH
+  UTS
+  UAS
+}
+
+enum StatusSesiAbsensi {
+  ACTIVE
+  CLOSED
+  EXPIRED
+}
+
+// ========================================
+// USER & AUTHENTICATION
+// ========================================
+
+model User {
+  uuid      String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  admin  Admin?
+  guru   Guru?
+  siswa  Siswa?
+  auditLogs AuditLog[]
+  passwordResetOTPs PasswordResetOTP[]
+
+  @@map("user")
+}
+
+// ========================================
+// PASSWORD RESET OTP
+// ========================================
+
+model PasswordResetOTP {
+  uuid      String   @id @default(uuid())
+  userUuid  String
+  otp       String
+  expiredAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+
+  @@map("password_reset_otp")
+}
+
+// ========================================
+// ADMIN
+// ========================================
+
+model Admin {
+  uuid      String   @id @default(uuid())
+  userUuid  String   @unique
+  namaLengkap String
+  email     String   @unique
+  noTelp    String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+
+  @@map("admin")
+}
+
+// ========================================
+// GURU
+// ========================================
+
+model Guru {
+  uuid           String   @id @default(uuid())
+  userUuid       String   @unique
+  nip            String   @unique
+  namaLengkap    String
+  jenisKelamin   Gender
+  email          String   @unique
+  noTelp         String?
+  alamat         String?
+  tanggalLahir   DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user                  User                   @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+  guruMengajarKelas     GuruMengajarKelas[]    // Legacy - keep for backward compat
+  teachingAssignments   TeachingAssignment[]   // New improved structure
+  waliKelas             Kelas[]                @relation("WaliKelas") // Kelas sebagai wali
+  nilai                 Nilai[]
+  izinHadir             IzinHadir[]
+  sesiAbsensi           SesiAbsensi[]
+
+  @@map("guru")
+}
+
+// ========================================
+// SISWA
+// ========================================
+
+model Siswa {
+  uuid           String   @id @default(uuid())
+  userUuid       String   @unique
+  nis            String   @unique
+  namaLengkap    String
+  jenisKelamin   Gender
+  kelasUuid      String
+  email          String?
+  noTelp         String?
+  alamat         String?
+  tanggalLahir   DateTime?
+  namaWali       String?
+  noTelpWali     String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user       User        @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+  kelas      Kelas       @relation(fields: [kelasUuid], references: [uuid])
+  absensi    Absensi[]
+  izinHadir  IzinHadir[]
+  nilai      Nilai[]
+
+  @@map("siswa")
+}
+
+// ========================================
+// KELAS
+// ========================================
+
+model Kelas {
+  uuid             String   @id @default(uuid())
+  namaKelas        String   @unique
+  tingkat          Int
+  jurusan          String?
+  waliKelas        String?  // Legacy - keep for backward compat
+  waliGuruUuid     String?  // New - FK to Guru
+  tahunAjaranUuid  String
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  waliGuru              Guru?                @relation("WaliKelas", fields: [waliGuruUuid], references: [uuid], onDelete: SetNull)
+  tahunAjaran           TahunAjaran          @relation(fields: [tahunAjaranUuid], references: [uuid])
+  siswa                 Siswa[]
+  guruMengajarKelas     GuruMengajarKelas[]  // Legacy - keep
+  teachingAssignments   TeachingAssignment[] // New improved
+  sesiAbsensi           SesiAbsensi[]
+
+  @@index([waliGuruUuid])
+  @@map("kelas")
+}
+
+// ========================================
+// TAHUN AJARAN
+// ========================================
+
+model TahunAjaran {
+  uuid           String   @id @default(uuid())
+  tahun          String   @unique // Format: "2024/2025"
+  semester       Int      // 1 atau 2
+  isActive       Boolean  @default(false)
+  tanggalMulai   DateTime
+  tanggalSelesai DateTime
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  kelas               Kelas[]
+  mapel               Mapel[]
+  teachingAssignments TeachingAssignment[] // New
+  sesiAbsensi         SesiAbsensi[]
+
+  @@map("tahun_ajaran")
+}
+
+// ========================================
+// MATA PELAJARAN
+// ========================================
+
+model Mapel {
+  uuid                 String   @id @default(uuid())
+  kodeMapel            String   @unique
+  namaMapel            String
+  deskripsi            String?
+  tahunAjaranUuid      String
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  tahunAjaran          TahunAjaran            @relation(fields: [tahunAjaranUuid], references: [uuid])
+  guruMengajarKelas    GuruMengajarKelas[]    // LEGACY - keep for backward compat
+  teachingAssignments  TeachingAssignment[]   // NEW - improved tracking
+  nilai                Nilai[]
+  sesiAbsensi          SesiAbsensi[]
+
+  @@map("mapel")
+}
+
+// ========================================
+// GURU MENGAJAR KELAS (Relasi M:N)
+// ========================================
+
+model GuruMengajarKelas {
+  uuid      String   @id @default(uuid())
+  guruUuid  String
+  kelasUuid String
+  mapelUuid String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  guru  Guru  @relation(fields: [guruUuid], references: [uuid], onDelete: Cascade)
+  kelas Kelas @relation(fields: [kelasUuid], references: [uuid], onDelete: Cascade)
+  mapel Mapel @relation(fields: [mapelUuid], references: [uuid], onDelete: Cascade)
+
+  @@unique([guruUuid, kelasUuid, mapelUuid])
+  @@map("guru_mengajar_kelas")
+}
+
+// ========================================
+// TEACHING ASSIGNMENT (Improved M:N with temporal context)
+// ========================================
+
+model TeachingAssignment {
+  uuid            String   @id @default(uuid())
+  guruUuid        String
+  kelasUuid       String
+  mapelUuid       String
+  tahunAjaranUuid String
+  semester        Int      // 1 atau 2
+  isActive        Boolean  @default(true)
+  isPrimary       Boolean  @default(false)  // Guru utama untuk mapel ini
+  jamPerMinggu    Int?     // Jumlah jam pelajaran per minggu
+  endedAt         DateTime? // Untuk track kapan assignment berakhir
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  guru            Guru         @relation(fields: [guruUuid], references: [uuid], onDelete: Cascade)
+  kelas           Kelas        @relation(fields: [kelasUuid], references: [uuid], onDelete: Cascade)
+  mapel           Mapel        @relation(fields: [mapelUuid], references: [uuid], onDelete: Cascade)
+  tahunAjaran     TahunAjaran  @relation(fields: [tahunAjaranUuid], references: [uuid], onDelete: Cascade)
+  
+  // Reverse relations
+  sesiAbsensi     SesiAbsensi[]
+  nilai           Nilai[]
+
+  // Ensure one guru doesn't have duplicate assignments for same class/mapel/semester
+  @@unique([guruUuid, kelasUuid, mapelUuid, tahunAjaranUuid, semester])
+  @@index([guruUuid])
+  @@index([kelasUuid])
+  @@index([mapelUuid])
+  @@index([tahunAjaranUuid])
+  @@index([isActive])
+  @@map("teaching_assignment")
+}
+
+// ========================================
+// SESI ABSENSI
+// ========================================
+
+model SesiAbsensi {
+  uuid                    String   @id @default(uuid())
+  tanggal                 DateTime
+  jamMulai                String   // Format: "HH:mm"
+  jamSelesai              String   // Format: "HH:mm"
+  tahunAjaranUuid         String?  // Legacy - keep for backward compat
+  kelasUuid               String?  // Legacy - keep for backward compat
+  mapelUuid               String?  // Legacy - keep for backward compat
+  guruUuid                String   // Legacy - keep for backward compat
+  teachingAssignmentUuid  String?  // NEW - link to teaching assignment
+  status                  StatusSesiAbsensi @default(ACTIVE)
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relations
+  guru                Guru                @relation(fields: [guruUuid], references: [uuid])
+  tahunAjaran         TahunAjaran?        @relation(fields: [tahunAjaranUuid], references: [uuid])
+  kelas               Kelas?              @relation(fields: [kelasUuid], references: [uuid])
+  mapel               Mapel?              @relation(fields: [mapelUuid], references: [uuid])
+  teachingAssignment  TeachingAssignment? @relation(fields: [teachingAssignmentUuid], references: [uuid], onDelete: SetNull)
+  qrCode              QRCode[]
+  absensi             Absensi[]
+
+  @@index([teachingAssignmentUuid])
+  @@map("sesi_absensi")
+}
+
+// ========================================
+// QR CODE
+// ========================================
+
+model QRCode {
+  uuid          String   @id @default(uuid())
+  sesiAbsensiUuid String
+  token         String   @unique
+  qrData        String   @db.Text
+  isExpired     Boolean  @default(false)
+  expiredAt     DateTime
+  
+  createdAt     DateTime @default(now())
+
+  // Relations
+  sesiAbsensi SesiAbsensi @relation(fields: [sesiAbsensiUuid], references: [uuid], onDelete: Cascade)
+
+  @@map("qr_code")
+}
+
+// ========================================
+// ABSENSI
+// ========================================
+
+model Absensi {
+  uuid            String   @id @default(uuid())
+  siswaUuid       String
+  sesiAbsensiUuid String
+  status          StatusAbsensi
+  latitude        Float?
+  longitude       Float?
+  scanTime        DateTime @default(now())
+  keterangan      String?
+  isManual        Boolean  @default(false) // Track if manually entered by teacher
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  siswa       Siswa       @relation(fields: [siswaUuid], references: [uuid], onDelete: Cascade)
+  sesiAbsensi SesiAbsensi @relation(fields: [sesiAbsensiUuid], references: [uuid])
+
+  @@unique([siswaUuid, sesiAbsensiUuid]) // Satu siswa hanya bisa absen 1x per sesi
+  @@map("absensi")
+}
+
+// ========================================
+// IZIN/SAKIT
+// ========================================
+
+model IzinHadir {
+  uuid        String   @id @default(uuid())
+  siswaUuid   String
+  tanggal     DateTime
+  jenis       StatusAbsensi // SAKIT atau IZIN
+  keterangan  String   @db.Text
+  bukti       String?  // File path surat keterangan
+  status      StatusIzin @default(PENDING)
+  guruUuid    String?  // Guru yang approve
+  catatanGuru String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  siswa Siswa @relation(fields: [siswaUuid], references: [uuid], onDelete: Cascade)
+  guru  Guru? @relation(fields: [guruUuid], references: [uuid])
+
+  @@map("izin_hadir")
+}
+
+// ========================================
+// NILAI
+// ========================================
+
+model Nilai {
+  uuid                    String   @id @default(uuid())
+  siswaUuid               String
+  mapelUuid               String   // Legacy - keep for backward compat
+  guruUuid                String   // Legacy - keep for backward compat
+  teachingAssignmentUuid  String?  // NEW - link to teaching assignment
+  jenisNilai              JenisNilai
+  nilai                   Float
+  keterangan              String?
+  tanggal                 DateTime @default(now())
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relations
+  siswa               Siswa               @relation(fields: [siswaUuid], references: [uuid], onDelete: Cascade)
+  mapel               Mapel               @relation(fields: [mapelUuid], references: [uuid])
+  guru                Guru                @relation(fields: [guruUuid], references: [uuid])
+  teachingAssignment  TeachingAssignment? @relation(fields: [teachingAssignmentUuid], references: [uuid], onDelete: SetNull)
+
+  @@index([teachingAssignmentUuid])
+  @@map("nilai")
+}
+
+// ========================================
+// ATURAN AKADEMIK
+// ========================================
+
+model AturanAkademik {
+  uuid                String   @id @default(uuid())
+  namaAturan          String   @unique
+  bobotTugas          Int
+  bobotUH             Int
+  bobotUTS            Int
+  bobotUAS            Int
+  minKehadiranPersen  Int
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("aturan_akademik")
+}
+
+// ========================================
+// AUDIT LOG
+// ========================================
+
+model AuditLog {
+  uuid        String   @id @default(uuid())
+  userUuid    String
+  action      String
+  tableName   String
+  recordUuid  String?
+  oldValue    String?  @db.Text
+  newValue    String?  @db.Text
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userUuid], references: [uuid])
+
+  @@map("audit_log")
+}
+
+// ========================================
+// LAPORAN
+// ========================================
+
+model Laporan {
+  uuid        String   @id @default(uuid())
+  jenisLaporan String  // "ABSENSI", "NILAI", "REKAP_KELAS"
+  periode     String
+  filePath    String
+  generatedBy String
+  
+  createdAt   DateTime @default(now())
+
+  @@map("laporan")
+}
