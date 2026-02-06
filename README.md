@@ -92,8 +92,8 @@ Sistem absensi dan nilai berbasis web untuk sekolah dengan fitur QR Code attenda
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/YOUR_USERNAME/sistem-absensi-nilai.git
-cd sistem-absensi-nilai/frontend
+git clone https://github.com/AHMAD-SYAMIL-SYAUQIE/academic-information-system.git
+cd academic-information-system/frontend
 npm install
 ```
 
@@ -326,43 +326,6 @@ Next.js mencoba load Google Fonts saat offline. Tidak mempengaruhi fungsionalita
 
 ---
 
-## 📝 Changelog
-
-### 🚀 Version 2.0.0 (February 6, 2026)
-
-**New Features:**
-- ✨ SweetAlert2 confirmation dialogs
-- 📧 SMTP email system (forgot password)
-- 📄 Dedicated PDF server
-- 📊 Pagination support
-
-**Security:**
-- 🛡️ Wali kelas validation
-- 🔐 Enhanced JWT auth
-- 🚫 Soft delete implementation
-
-**Bug Fixes:**
-- ✅ Fixed PDF export font loading
-- ✅ Fixed API field mapping (waliKelas)
-- ✅ Fixed guru.map pagination error
-- ✅ Fixed dashboard siswa data loading
-- ✅ Consistent API response formats
-
-**UI/UX:**
-- 📱 Enhanced responsive design
-- 🎨 Consistent theme
-- ⚡ 40% faster initial load
-
----
-
-### Version 1.0.0 (January 2026)
-- ✅ Initial MVP release
-- ✅ Basic CRUD operations
-- ✅ QR Code attendance
-- ✅ Grade management
-
----
-
 ## 🤝 Contributing
 
 Contributions welcome! Please:
@@ -381,36 +344,11 @@ This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for 
 
 ---
 
-## 🚀 Push ke GitHub
-
-```bash
-# Initialize repository
-git init
-git add .
-git commit -m "Initial commit: Sistem Absensi v2.0.0"
-
-# Connect to GitHub (ganti YOUR_USERNAME)
-git remote add origin https://github.com/YOUR_USERNAME/sistem-absensi-nilai.git
-
-# Push to GitHub
-git branch -M main
-git push -u origin main
-```
-
-**Setup GitHub:**
-1. Buat repository di https://github.com/new
-2. Name: `sistem-absensi-nilai`
-3. Visibility: Public/Private
-4. ⚠️ JANGAN initialize dengan README
-5. Run commands di atas
-
----
-
 ## 📞 Support
 
-- **📧 Email:** contact@man19jakarta.sch.id
-- **🐛 Issues:** [GitHub Issues](https://github.com/YOUR_USERNAME/sistem-absensi-nilai/issues)
-- **📚 Docs:** [Wiki](https://github.com/YOUR_USERNAME/sistem-absensi-nilai/wiki)
+- **📧 Email:** ahmadsyamilsyauqie@gmail.com
+- **🐛 Issues:** [GitHub Issues](https://github.com/AHMAD-SYAMIL-SYAUQIE/academic-information-system/issues)
+- **💼 Portfolio:** [frezuarr.vercel.app](https://frezuarr.vercel.app)
 
 ---
 
@@ -426,9 +364,9 @@ Built with amazing open-source technologies:
 
 **⭐ Star this repository if you find it helpful!**
 
-Built with ❤️ by **Ahmad Syamil Syauqie**
+Built with ❤️ by **[Ahmad Syamil Syauqie](https://frezuarr.vercel.app)**
 
-**Version 2.0.0** | **February 6, 2026** | **Status: ✅ Production Ready**
+**Status: ✅ Production Ready** | **Last Updated:** February 7, 2026
 
 [⬆ Back to Top](#-sistem-absensi-dan-nilai-akademik)
 
